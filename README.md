@@ -22,11 +22,15 @@ const storage = new Map();
 
 new Koa()
 	.use(async (_, next) => {
-		const wc = new WorkContext()
-			.onFinish(() => storage.delete(wc));
+		const wc = new WorkContext();
 		storage.set(wc, {});
-		await wc.run(next);
-		wc.finish();
+		wc.onFinish(() => storage.delete(wc));
+
+		try {
+			await wc.run(next);
+		} finally {
+			wc.finish();
+		}
 	})
 	.use((ctx, next) => {
 		// We can use "ctx" in this simplified example to show it's working
@@ -55,7 +59,7 @@ later usage.
 
 ---
 
-#### `.onFinish(cb: () => void): WorkContext`
+#### `.onFinish(cb: () => void): () => void)`
 
 It is likely desireable to use the `WorkContext` object as a refernce for
 some sort of storage or other tracking. To avoid excess memory build-up, it is
@@ -63,7 +67,7 @@ also important that such mechanisms would get cleaned up after the work is
 done. A callback function can be registered with `.onFinished(callback)` to do
 that cleanup when `.finish()` is called.
 
-Returns the context instance for easy wire-up.
+Returns a function that removes the added listener.
 
 **NOTE:** Throws an `Error` if `.finish()` has already been called.
 

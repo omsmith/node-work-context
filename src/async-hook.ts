@@ -2,7 +2,13 @@ import AsyncHooks = require('async_hooks');
 
 import WorkContext from './work-context';
 
-const map = new Map<number, { ctx: WorkContext; exits: (() => void)[] }>();
+// eslint-disable-next-line @typescript-eslint/prefer-interface
+type MapEntry = {
+	ctx: WorkContext;
+	exits: (() => void)[];
+	removeFinishListener: () => void;
+}
+const map = new Map<number, MapEntry>();
 
 export default AsyncHooks
 	.createHook({
@@ -12,13 +18,14 @@ export default AsyncHooks
 				return;
 			}
 
+			const onFinish = function onFinish(): void {
+				map.delete(asyncId);
+			};
+
 			map.set(asyncId, {
 				ctx,
-				exits: []
-			});
-
-			ctx.onFinish(() => {
-				map.delete(asyncId);
+				exits: [],
+				removeFinishListener: ctx.onFinish(onFinish)
 			});
 		},
 
@@ -42,6 +49,12 @@ export default AsyncHooks
 		},
 
 		destroy(asyncId: number) {
+			const mapped = map.get(asyncId);
+			if (!mapped) {
+				return;
+			}
+
+			mapped.removeFinishListener();
 			map.delete(asyncId);
 		}
 	})

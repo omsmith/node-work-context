@@ -1,3 +1,5 @@
+import EventEmitter = require('events');
+
 import hook from './async-hook';
 
 const stack = new Array<WorkContext>();
@@ -9,7 +11,7 @@ const stack = new Array<WorkContext>();
  */
 export default class WorkContext {
 
-	private _callbacks: Function[] | null = [];
+	private _ee: EventEmitter | null = new EventEmitter();
 
 	/**
 	 * It is likely desireable to use the `WorkContext` object as a reference
@@ -18,15 +20,23 @@ export default class WorkContext {
 	 * after the work is done. A callback function can be registered with
 	 * `.onFinished(callback)` to do that cleanup when `.finish()` is called.
 	 *
+	 * Returns a function that removes the added listener
+	 *
 	 * @param callback
 	 */
-	public onFinish(callback: () => void): WorkContext {
+	public onFinish(callback: () => void): () => void {
 		this._checkFinished();
 
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		this._callbacks!.push(callback);
+		this._ee!.on('finish', callback);
 
-		return this;
+		const removeFinishListener = (): void => {
+			if (this._ee) {
+				this._ee.removeListener('finish', callback);
+			}
+		};
+
+		return removeFinishListener;
 	}
 
 	/**
@@ -41,13 +51,10 @@ export default class WorkContext {
 		}
 
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		for (const cb of this._callbacks!) {
-			if (cb) {
-				cb();
-			}
-		}
-
-		this._callbacks = null;
+		this._ee!.emit('finish');
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		this._ee!.removeAllListeners();
+		this._ee = null;
 	}
 
 	/**
@@ -97,7 +104,7 @@ export default class WorkContext {
 	}
 
 	private _checkFinished(): void {
-		if (this._callbacks === null) {
+		if (this._ee === null) {
 			throw new Error('Work context has already finished')
 		}
 	}
