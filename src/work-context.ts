@@ -113,13 +113,12 @@ export default class WorkContext {
 
 		return stack[stack.length - 1];
 	}
-
-	/**
-	 * `work-context` leverages `async_hooks` to perform tracking across async
-	 * boundaries. The `AsyncHook` it uses to do so is available as
-	 * `WorkContext.AsyncHook` and is enabled by default. It can be disabled if
-	 * this is not desired, but its usage is generally recommended to maintain
-	 * correctness.
-	 */
-	public static readonly AsyncHook = hook;
 }
+
+/**
+ * `work-context` leverages `async_hooks` to perform tracking across async
+ * boundaries. The `AsyncHook` it uses to do so is available as an export named
+ * `AsyncHook` and is enabled by default. It can be disabled if this is not
+ * desired, but its usage is generally recommended to maintain correctness.
+ */
+export { hook as AsyncHook };
