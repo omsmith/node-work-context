@@ -11,36 +11,37 @@ npm install work-context --save
 ## Usage
 
 ```js
-// Create storage for your work
-import WorkContext from '..';
+'use strict';
 
-const storageMap = new Map();
+const Koa = require('koa');
+const WorkContext = require('work-context').default;
 
-const wc1 = new WorkContext().onFinish(() => storageMap.delete(wc1));
-const wc2 = new WorkContext().onFinish(() => storageMap.delete(wc2));
+const delay = require('util').promisify(setTimeout);
 
-storageMap.set(wc1, { key: 'wc1' }).set(wc2, { key: 'wc2' });
+const storage = new Map();
 
-(async () => {
-	await Promise.all([
-		wc1.run(() => handler('A')),
-		wc2.run(() => handler('B'))
-	]);
+new Koa()
+	.use(async (_, next) => {
+		const wc = new WorkContext()
+			.onFinish(() => storage.delete(wc));
+		storage.set(wc, {});
+		await wc.run(next);
+		wc.finish();
+	})
+	.use((ctx, next) => {
+		// We can use "ctx" in this simplified example to show it's working
+		ctx.verify = ctx.query.foo;
+		storage.get(WorkContext.getCurrent()).foo = ctx.query.foo;
+		return next();
+	})
+	.use(async ctx => {
+		await delay(1);
+		const msg = `${ctx.verify} => ${storage.get(WorkContext.getCurrent()).foo}`;
+		console.log(msg);
+		ctx.body = msg;
+	})
+	.listen(8000);
 
-	wc1.finish();
-	wc2.finish();
-})();
-
-async function handler(logPrefix) {
-	console.log(logPrefix, storageMap.get(WorkContext.getCurrent()).key)
-
-	await new Promise(resolve => setTimeout(() => {
-		console.log(logPrefix, storageMap.get(WorkContext.getCurrent()).key);
-		resolve();
-	}, 3));
-
-	console.log(logPrefix, storageMap.get(WorkContext.getCurrent()).key);
-}
 ```
 
 ## API
