@@ -111,4 +111,14 @@ test('work-context', t => (async () => {
 	// @ts-ignore
 	t.throws(() => wc1.run('cats'), /[Error: "fn" should be a Function]/, '#run should throw when passed a string');
 
+	{
+		const finished = new WorkContext();
+		finished.finish();
+
+		t.throws(() => finished.enter(), /[Error: Work context is already finished]/, '#enter should throw when finished');
+		t.throws(() => finished.finish(), /[Error: Work context is already finished]/, '#finish should throw when finished');
+		t.throws(() => finished.onFinish(() => {}), /[Error: Work context is already finished]/, '#onFinish should throw when finished');
+		t.throws(() => finished.run(() => {}), /[Error: Work context is already finished]/, '#run should throw when finished');
+	}
+
 })().then(t.end, e => process.nextTick(() => t.end(e))));
