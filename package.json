@@ -1,0 +1,46 @@
+{
+  "name": "work-context",
+  "version": "1.0.0",
+  "description": "Assistant for building context-tracking based libraries",
+  "main": "lib/work-context.js",
+  "files": [
+    "lib",
+    "LICENSE",
+    "README.md"
+  ],
+  "scripts": {
+    "clean": "rm -rf lib lib_test",
+    "prebuild": "npm run clean",
+    "build": "tsc && tsc -p test/tsconfig.json",
+    "pretape": "npm run build",
+    "tape": "tape -r source-map-support/register lib_test/*.js",
+    "check-style": "eslint src/**/*.ts test/**/*.ts",
+    "test": "npm run check-style && npm run tape",
+    "prepublishOnly": "npm run clean && npm run build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/omsmith/node-work-context.git"
+  },
+  "keywords": [
+    "context",
+    "async"
+  ],
+  "author": "Owen Smith <owen@omsmith.ca>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/omsmith/node-work-context/issues"
+  },
+  "homepage": "https://github.com/omsmith/node-work-context#readme",
+  "devDependencies": {
+    "@types/node": "^10.12.21",
+    "@types/tape": "^4.2.33",
+    "@typescript-eslint/eslint-plugin": "^1.2.0",
+    "@typescript-eslint/parser": "^1.2.0",
+    "eslint": "^5.13.0",
+    "source-map-support": "^0.5.10",
+    "tape": "^4.9.2",
+    "typescript": "^3.3.1",
+    "will-call": "^1.0.1"
+  }
+}
