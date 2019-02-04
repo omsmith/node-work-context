@@ -71,7 +71,7 @@ export default class WorkContext {
 		stack.push(this);
 
 		const position = stack.length;
-		return () => {
+		return function exit() {
 			if (stack.length !== position) {
 				throw new Error('Exit called out of order')
 			}
