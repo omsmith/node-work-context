@@ -121,4 +121,56 @@ test('work-context', t => (async () => {
 		t.throws(() => finished.run(() => {}), /[Error: Work context is already finished]/, '#run should throw when finished');
 	}
 
+	{
+		const wc = new WorkContext();
+
+		let finishListenerACalled = false;
+		wc.onFinish(call.expect(() => finishListenerACalled = true ));
+
+		let finishListenerBCalled = false;
+		wc.onFinish(call.expect(() => finishListenerBCalled = true ));
+
+		let finishListenerCCalled = false;
+		const remove = wc.onFinish(() => finishListenerCCalled = true);
+		remove();
+
+		t.equal(finishListenerACalled, false, 'finish listeners should not be called until #finish');
+		t.equal(finishListenerBCalled, false, 'finish listeners should not be called until #finish');
+		wc.finish();
+		t.equal(finishListenerACalled, true, 'finish listeners should be called after #finish');
+		t.equal(finishListenerBCalled, true, 'finish listeners should be called after #finish');
+		t.equal(finishListenerCCalled, false, 'removed finish listeners should not be called on #finish');
+	}
+
+	{
+		const wc = new WorkContext();
+
+		wc.onFinish(call.expect(() => {
+			throw new Error('throwing finish listener');
+		}));
+
+		t.throws(() => wc.finish(), /[Error: throwing finish listener]/, '#finish throws if a finish listener throws');
+	}
+
+	{
+		const wc = new WorkContext();
+
+		const remove = wc.onFinish(call.expect(() => {}));
+
+		wc.finish();
+
+		t.doesNotThrow(remove, 'removeFinishListener fn does not throw even if finished');
+	}
+
+	{
+		const wc = new WorkContext();
+		wc.run(call.expect(() => {
+			t.throws(
+				() => wc.finish(),
+				/[Error: Finish called before context was cleared]/,
+				'#finish throws if context is in use'
+			);
+		}));
+	}
+
 })().then(t.end, e => process.nextTick(() => t.end(e))));
