@@ -11,7 +11,7 @@ const stack = new Array<WorkContext>();
  */
 export default class WorkContext {
 
-	private _ee: EventEmitter | null = new EventEmitter();
+	private _ee: EventEmitter | null = new EventEmitter().setMaxListeners(0);
 
 	/**
 	 * It is likely desireable to use the `WorkContext` object as a reference
