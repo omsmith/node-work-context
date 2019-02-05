@@ -5,7 +5,7 @@ import WorkContext from './work-context';
 // eslint-disable-next-line @typescript-eslint/prefer-interface
 type MapEntry = {
 	ctx: WorkContext;
-	exits: (() => void)[];
+	exit: null | (() => void);
 	removeFinishListener: () => void;
 }
 const map = new Map<number, MapEntry>();
@@ -24,7 +24,7 @@ export default AsyncHooks
 
 			map.set(asyncId, {
 				ctx,
-				exits: [],
+				exit: null,
 				removeFinishListener: ctx.onFinish(onFinish)
 			});
 		},
@@ -35,7 +35,7 @@ export default AsyncHooks
 				return;
 			}
 
-			mapped.exits.push(mapped.ctx.enter());
+			mapped.exit = mapped.ctx.enter();
 		},
 
 		after(asyncId: number) {
@@ -45,7 +45,8 @@ export default AsyncHooks
 			}
 
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			mapped.exits.pop()!();
+			mapped.exit!();
+			mapped.exit = null;
 		},
 
 		destroy(asyncId: number) {
